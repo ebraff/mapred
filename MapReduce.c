@@ -75,5 +75,20 @@ int parseArgs(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	parseArgs(argc, argv);
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+	{
+		printf("ERROR: There are some problems with your current directory bitch go fix them!\n");
+		return 1;
+	}
+
+	/*Because C is stupid!*/
+	strcat(cwd, "/split.sh ");
+	strcat(cwd, infile);
+	strcat(cwd, " ");
+	strcat(cwd, argv[6]); /*change this to itoa at some point when were less lazy*/
+	system(cwd); /*Split the input file*/
+	
+	/*remove extra split files*/
 	return 0;
 }
