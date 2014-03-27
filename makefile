@@ -3,7 +3,7 @@ COMPILER = gcc
 all: program
 
 program: MapReduce.c
-	$(COMPILER) -g -o mapred MapReduce.h MapReduce.c
+	$(COMPILER) -pthread -g -o mapred MapReduce.h MapReduce.c
 
 header: MapReduce.h
 	$(COMPILER) -g -o head MapReduce.h

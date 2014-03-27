@@ -3,8 +3,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-
+#include <pthread.h>
 #include "uthash.h"
+
+/* GLOBAL VARIABLES */
 
 int aFlag; /*wordcount = 0, sort = 1*/
 int iFlag; /*threads = 0, procs = 1*/
@@ -13,10 +15,7 @@ int numReduceThreads;
 char *infile, *outfile;
 struct hashNode *keyMap;
 
-void printUsage();
-int isNumber(char *string);
-int parseArgs(int argc, char *argv[]);
-void cleanShardFiles();
+/* STRUCTS */
 
 typedef struct valueNode
 {
@@ -31,12 +30,19 @@ typedef struct hashNode
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
 
-hashNode* map(hashNode* (*func_ptr)(char *shard));
+/* FUNCTION HEADERS */
+
+void printUsage();
+int isNumber(char *string);
+int parseArgs(int argc, char *argv[]);
+
+hashNode* map(void *(*func_ptr)(void *shard));
 void reduce(void (*func_ptr)(void *key, void *head));
 
-hashNode* mapWord(char* shard);
-hashNode* mapInt(char* shard);
+void *mapWord(void *voidshard);
+void *mapInt(void *shard);
 
 void reduceWord(hashNode* wordHash);
 void reduceInt(hashNode* intHash);
 
+void cleanShardFiles();

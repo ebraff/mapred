@@ -109,34 +109,31 @@ int parseArgs(int argc, char *argv[])
  * 						 each worker will be responsible for executing.
  * Returns:
  */
-hashNode* map(hashNode* (*func_ptr)(char *shard))
+hashNode* map(void *(*func_ptr)(void *shard))
 {
-	int threadID, status, pid;
+	pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * numMapThreads);
+	char **shardfiles = (char **)malloc(sizeof(char *) * numMapThreads);
+
+	int threadID;
 	/* Create the Map worker threads and have each one
 	 * call func_ptr for a different file shard */
 	for(threadID = 0; threadID < numMapThreads; threadID++)
 	{
-		pid = fork();
-		if (pid == -1)
-		{
-			/* fork failed */
-			printf("ERROR: There was a problem forking the map workers!\n");
-			exit(1);
-		}
-		else if (pid == 0)
-		{
-			/* child process */
-			char *shardfile = (char *)malloc(sizeof(char) * (strlen(infile) + 4));
-			sprintf(shardfile, "%s.%d", infile, threadID);
-
-
-			/* Free all allocated memory and exit */
-			free(shardfile);
-			exit(0);
-		}
+		/* grab the shardfile that this thread is incharge of */
+		shardfiles[threadID] = (char *)malloc(sizeof(char) * (strlen(infile) + 4));
+		sprintf(shardfiles[threadID], "%s.%d", infile, threadID);
+		printf("shardfile = %s\n", shardfiles[threadID]);
+		pthread_create(&threads[threadID], NULL, func_ptr, (void *)shardfiles[threadID]);
 	}
 
-	while((pid = wait(&status)) != -1);
+	/* Sit and wait for everyone to finish */
+	for(threadID = 0; threadID < numMapThreads; threadID++)
+	{
+		pthread_join(threads[threadID], NULL);
+		free(shardfiles[threadID]);
+	}
+
+	free(threads);
 }
 
 /* Name: reduceWord
@@ -150,13 +147,36 @@ void reduceWord(hashNode* wordHash)
 }
 
 /* Name: mapWord
- * Description:
- * Arguments: shard -
- * Returns:
+ * Description: The user defined function which pulls words out
+ * 				of a shard file
+ * Arguments: shard - the name of the shard file
+ * Returns: void
  */
-hashNode* mapWord(char* shard)
+void *mapWord(void *voidshard)
 {
+	char *shard = (char *)voidshard;
+	printf("mapWord(%s)\n", shard);
+	FILE *file;
+	if ((file = fopen(shard, "r")) == NULL)
+	{
+		printf("ERROR: Failed to open shard file %s\n", shard);
+		exit(1);
+	}
 
+	char word[1024]; /* word buffer for reading from the file */
+	char chr;
+	while((chr = fgetc(file)) != EOF)
+	{
+		if (isalpha(chr)) /* add to the current word */
+			sprintf(word, "%s%c", word, chr);
+		else if (strlen(word) != 0) /* if we have a completed word */
+		{
+			addWord(word, 1);
+			sprintf(word, "");
+		}
+	}
+
+	fclose(file);
 }
 
 /* Name: cleanShardFiles
@@ -199,7 +219,10 @@ int main(int argc, char *argv[])
 	keyMap = NULL;
 
 	/* Start the Mapping process */
-	map(NULL);
+	if (aFlag) /* sort */
+		printf("this needs to be replaced with a map call");
+	else /* wordcount */
+		map(&mapWord);
 
 	//keyMap = map(mapWord);
 	
