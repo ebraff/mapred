@@ -16,6 +16,7 @@ struct hashNode *keyMap;
 void printUsage();
 int isNumber(char *string);
 int parseArgs(int argc, char *argv[]);
+void cleanShardFiles();
 
 typedef struct valueNode
 {
@@ -29,29 +30,6 @@ typedef struct hashNode
     valueNode *valueHead;
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
-
-void addWord(char* word, int value, hashNode* head) {
-    hashNode *hn;
-    valueNode *vn;
-
-    hn = malloc(sizeof(struct hashNode));
-    hn->key = strdup( word);
-    
-    vn = malloc(sizeof(struct valueNode));
-    vn->value = 1;
-    hn->valueHead = vn;
-    
-    /* Does not work with hashNode passes as parameter, only with global keyMap */
-    HASH_ADD_STR( keyMap, key, hn );  /* id: name of key field */
-}
-
-hashNode *findWord(const char* word, hashNode* head) {
-    hashNode *hn;
-    
-    /* Does not work with hashNode passes as parameter, only with global keyMap */
-    HASH_FIND_STR( keyMap, "hi", hn );  /* hn: output pointer */
-    return hn;
-}
 
 hashNode* map(hashNode* (*func_ptr)(char *shard));
 void reduce(void (*func_ptr)(void *key, void *head));
