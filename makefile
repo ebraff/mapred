@@ -3,6 +3,7 @@ COMPILER = gcc
 all: program
 
 program: MapReduce.c
+
 	$(COMPILER) -g -o mapred MapReduce.h hash.h MapReduce.c
 
 run: mapred
