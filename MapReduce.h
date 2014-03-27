@@ -5,6 +5,7 @@
 #include <ctype.h>
 
 #include "uthash.h"
+#include "hash.h"
 
 int aFlag; /*wordcount = 0, sort = 1*/
 int iFlag; /*threads = 0, procs = 1*/
@@ -25,12 +26,12 @@ typedef struct valueNode
 
 typedef struct hashNode 
 {
-    void* key;                    /* key */
+    char* key;                    /* key */
     valueNode *valueHead;
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
 
-void addWord(char* word, int value, hashNode* head) {
+void addWord(char* word, int value) {
     hashNode *hn;
     valueNode *vn;
 

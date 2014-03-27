@@ -3,10 +3,7 @@ COMPILER = gcc
 all: program
 
 program: MapReduce.c
-	$(COMPILER) -g -o mapred MapReduce.h MapReduce.c
-
-header: MapReduce.h
-	$(COMPILER) -g -o head MapReduce.h
+	$(COMPILER) -g -o mapred MapReduce.h hash.h MapReduce.c
 
 run: mapred
 	./mapred -a wordcount -i threads -m 10 -r 10 input.txt output.txt
