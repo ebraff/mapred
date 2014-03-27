@@ -72,6 +72,15 @@ int parseArgs(int argc, char *argv[])
 	outfile = strdup(argv[argc - 1]);
 }
 
+void map(void (*func_ptr)(char *shard))
+{
+	int count;
+	for(count = 0; count < numMapThreads; count++)
+	{
+		
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	parseArgs(argc, argv);
@@ -88,6 +97,8 @@ int main(int argc, char *argv[])
 	strcat(cwd, " ");
 	strcat(cwd, argv[6]); /*change this to itoa at some point when were less lazy*/
 	system(cwd); /*Split the input file*/
+	
+	map();
 	
 	/*remove extra split files*/
 	return 0;

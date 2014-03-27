@@ -15,3 +15,5 @@ char *infile, *outfile;
 void printUsage();
 int isNumber(char *string);
 int parseArgs(int argc, char *argv[]);
+void map(void (*func_ptr)(char *shard));
+void reduce(void (*func_ptr)(void *key, void *head));
