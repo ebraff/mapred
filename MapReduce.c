@@ -109,12 +109,13 @@ int parseArgs(int argc, char *argv[])
  * 						 each worker will be responsible for executing.
  * Returns:
  */
-hashNode* map(void *(*func_ptr)(void *shard))
+void map(void *(*func_ptr)(void *shard))
 {
 	pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * numMapThreads);
 	char **shardfiles = (char **)malloc(sizeof(char *) * numMapThreads);
 
 	int threadID;
+	
 	/* Create the Map worker threads and have each one
 	 * call func_ptr for a different file shard */
 	for(threadID = 0; threadID < numMapThreads; threadID++)
@@ -200,6 +201,8 @@ void cleanShardFiles()
 /* Yeah no im not gona give main a pretty function comment! */
 int main(int argc, char *argv[])
 {
+	int i;
+	
 	/* Validate the arguments before doing anything */
 	if (!parseArgs(argc, argv))
 		return 1;
@@ -215,8 +218,13 @@ int main(int argc, char *argv[])
 	/* perform some C black magic to concatinate strings together */
 	sprintf(cwd, "%s/split.sh %s %d", cwd, infile, numMapThreads);
 	system(cwd); /*Split the input file*/
-
-	keyMap = NULL;
+	
+	/* Initialize and malloc array of hash tables for storage */
+	hashArray = (hashNode **)malloc(sizeof(hashNode*) * numReduceThreads);
+	for( i = 0 ; i < numReduceThreads ; i++)
+	{
+		hashArray[i] = NULL;
+	}
 
 	/* Start the Mapping process */
 	if (aFlag) /* sort */

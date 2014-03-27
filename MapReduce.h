@@ -14,7 +14,8 @@ int iFlag; /*threads = 0, procs = 1*/
 int numMapThreads;
 int numReduceThreads;
 char *infile, *outfile;
-struct hashNode *keyMap;
+/* Array of hashtables, one for each reduce thread*/
+struct hashNode ** hashArray;
 
 /* STRUCTS */
 
@@ -38,7 +39,7 @@ void printUsage();
 int isNumber(char *string);
 int parseArgs(int argc, char *argv[]);
 
-hashNode* map(void *(*func_ptr)(void *shard));
+void map(void *(*func_ptr)(void *shard));
 void reduce(void (*func_ptr)(void *key, void *head));
 
 void *mapWord(void *voidshard);
@@ -47,29 +48,72 @@ void *mapInt(void *shard);
 void reduceWord(hashNode* wordHash);
 void reduceInt(hashNode* intHash);
 
+
 void cleanShardFiles();
 
+hashNode* newHashNode(char* word, int value);
+valueNode* newValNode(int value);
+void addWord(char* word, int value);
+hashNode *findWord(const char* word);
+
+unsigned long hash(unsigned char *str); 
+
+
+/* HASH FUNCTIONS */
+
+/* Create new hashNode */
+hashNode* newHashNode(char* word, int value)
+{
+	hashNode *hn = (hashNode *)malloc(sizeof(hashNode));
+	hn->key = strdup(word); 
+    hn->valueHead = newValNode(value);
+    
+    return hn;
+}
+
+/* Create new hashNode */
+valueNode* newValNode(int value)
+{
+    valueNode *vn = (valueNode *)malloc(sizeof(struct valueNode));
+    vn->value = value;
+    vn->next = NULL;
+    
+    return vn;
+}
 
 void addWord(char* word, int value) {
-    hashNode *hn;
-    valueNode *vn;
-
-    hn = malloc(sizeof(struct hashNode));
-    hn->key = strdup( word);
+    hashNode *hn = findWord(word);
     
-    vn = malloc(sizeof(struct valueNode));
-    vn->value = 1;
-    hn->valueHead = vn;
-    
-    /* Does not work with hashNode passes as parameter, only with global keyMap */
-    HASH_ADD_STR( keyMap, key, hn );  /* id: name of key field */
+    if(hn)
+    {
+		valueNode* vn = newValNode(value);
+		vn->next = hn->valueHead;
+		hn->valueHead = vn;
+	}
+	else
+	{
+		hn = newHashNode(word, value);
+		HASH_ADD_STR( hashArray[hash(word) % numReduceThreads], key, hn ); /* id: name of key field */
+	}
+      
 }
 
 hashNode *findWord(const char* word) {
     hashNode *hn;
     
     /* Does not work with hashNode passes as parameter, only with global keyMap */
-    HASH_FIND_STR( keyMap, "hi", hn );  /* hn: output pointer */
+    HASH_FIND_STR(hashArray[hash((char*) word) % numReduceThreads], word, hn );  /* hn: output pointer */
     return hn;
+}
+
+unsigned long hash(unsigned char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while (c = *str++)
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
 }
 
