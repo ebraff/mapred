@@ -72,10 +72,31 @@ int parseArgs(int argc, char *argv[])
 	outfile = strdup(argv[argc - 1]);
 }
 
-int main(int argc, char *argv[])
+hashNode* map(hashNode* (*func_ptr)(char *shard))
+{
+	int count;
+	for(count = 0; count < numMapThreads; count++)
+	{
+		
+	}
+}
+
+void reduceWord(hashNode* wordHash)
 {
 	
+}
+
+hashNode* mapWord(char* shard)
+{
+
+}
+
+int main(int argc, char *argv[])
+{
+	keyMap = NULL;
+	
 	parseArgs(argc, argv);
+	
 	char cwd[1024];
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 	{
@@ -88,10 +109,24 @@ int main(int argc, char *argv[])
 	strcat(cwd, infile);
 	strcat(cwd, " ");
 	strcat(cwd, argv[6]); /*change this to itoa at some point when were less lazy*/
-	system(cwd); /*Split the input file*/
+	//system(cwd); /*Split the input file*/
 	
+
+	//keyMap = map(mapWord);
 	
+	addWord("hi", 1, keyMap);
+	printf("Added \"hi\"\n");
 	
+	hashNode* word = findWord("hi" , keyMap);
+	
+	if(word) 
+	{
+		printf("Found word: %s with value: %i\n", word->key, word->valueHead->value);
+	}
+	else
+	{
+		printf("No word found\n");
+	}
 	/*remove extra split files*/
 	return 0;
 }
