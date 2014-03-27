@@ -41,13 +41,15 @@ void addWord(char* word, int value, hashNode* head) {
     vn->value = 1;
     hn->valueHead = vn;
     
+    /* Does not work with hashNode passes as parameter, only with global keyMap */
     HASH_ADD_STR( keyMap, key, hn );  /* id: name of key field */
 }
 
 hashNode *findWord(const char* word, hashNode* head) {
     hashNode *hn;
-
-    HASH_FIND_STR( keyMap, "hi", hn );  /* s: output pointer */
+    
+    /* Does not work with hashNode passes as parameter, only with global keyMap */
+    HASH_FIND_STR( keyMap, "hi", hn );  /* hn: output pointer */
     return hn;
 }
 
