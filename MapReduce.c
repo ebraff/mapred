@@ -200,6 +200,7 @@ void *reduceWord(void *argstruct)
 			vnode = vnode->next;
 			free(temp);
 		}
+
 		fprintf(file, "%s %d\n", hnode->key, total);
 	}
 }
@@ -306,7 +307,10 @@ int main(int argc, char *argv[])
 	if (aFlag) /* sort */
 		printf("this needs to be replaced with a map call");
 	else /* wordcount */
+	{
 		map(&mapWord);
+		partition(&reduceWord);
+	}
 
 	//keyMap = map(mapWord);
 	
