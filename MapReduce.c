@@ -107,7 +107,7 @@ int parseArgs(int argc, char *argv[])
  * 				map worker threads.
  * Arguments: func_ptr - a pointer to the user defined function which
  * 						 each worker will be responsible for executing.
- * Returns:
+ * Returns: void
  */
 void map(void *(*func_ptr)(void *shard))
 {
@@ -137,14 +137,72 @@ void map(void *(*func_ptr)(void *shard))
 	free(threads);
 }
 
+/* Name: reduce
+ * Description: This is the framework reduce function for the mapreduce
+ * 				structure. This function will start and control all of
+ * 				reduce worker threads.
+ * Arguments: func_ptr - a pointer to the user defined function which
+ * 						 each worker will be responsible for executing.
+ * Returns: void
+ */
+void partition(void *(*func_ptr)(void *argstruct))
+{
+	pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * numReduceThreads);
+	arg *threadargs = (arg *)malloc(sizeof(arg) * numReduceThreads);
+
+	FILE *file;
+	if ((file = fopen(outfile, "w")) == NULL)
+	{
+		printf("ERROR: Failed to open output file %s\n", outfile);
+		exit(1);
+	}
+
+	int threadID;
+	/* Create the Map worker threads and have each one
+	 * call func_ptr for a different file shard */
+	for(threadID = 0; threadID < numReduceThreads; threadID++)
+	{
+		threadargs[threadID].index = threadID;
+		threadargs[threadID].file = file;
+		pthread_create(&threads[threadID], NULL, func_ptr, (void *)&threadargs[threadID]);
+	}
+
+	/* Sit and wait for everyone to finish */
+	for(threadID = 0; threadID < numReduceThreads; threadID++)
+		pthread_join(threads[threadID], NULL);
+
+	free(threads);
+	fclose(file);
+}
+
 /* Name: reduceWord
  * Description:
  * Arguments: wordHash -
  * Returns: void
  */
-void reduceWord(hashNode* wordHash)
+void *reduceWord(void *argstruct)
 {
-	
+	int idx = ((arg *)argstruct)->index;
+	FILE *file = ((arg *)argstruct)->file;
+
+	hashNode *hnode;
+	/* step through all the keys */
+	for(hnode = hashArray[idx]; hnode != NULL; hnode = hnode->hh.next)
+	{
+		int total = 0;
+		valueNode *vnode;
+
+		/* Sum up the values for each key */
+		vnode = hnode->valueHead;
+		while(vnode != NULL)
+		{
+			total++;
+			valueNode *temp = vnode;
+			vnode = vnode->next;
+			free(temp);
+		}
+		fprintf(file, "%s %d\n", hnode->key, total);
+	}
 }
 
 /* Name: mapWord
@@ -169,7 +227,7 @@ void *mapWord(void *voidshard)
 	while((chr = fgetc(file)) != EOF)
 	{
 		if (isalpha(chr)) /* add to the current word */
-			sprintf(word, "%s%c", word, chr);
+			sprintf(word, "%s%c", word, tolower(chr));
 		else if (strlen(word) != 0) /* if we have a completed word */
 		{
 			addWord(word, 1);
@@ -195,6 +253,26 @@ void cleanShardFiles()
 		sprintf(cmd, "rm -f %s.%d", infile, shardNum);
 		system(cmd);
 		free(cmd);
+	}
+}
+
+/* \giggle */
+void trolol()
+{
+	time_t t;
+	srand((unsigned) time(&t));
+	int funNum = rand();
+	printf("%d\n",funNum);
+	if (funNum % 7 == 0)
+	{
+		printf("         ___\n");
+		printf("    ~ _>/O O\\<_ ~~ ~~ ~  ~ ~\n");
+		printf("  ~~ ( o     o )  ~~~~ ~~~ ~~~~~\n");
+		printf("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+		printf("    _/         \\_\n");
+		printf("   (__/(     )\\__)\n");
+		printf("      _/     \\\n");
+		printf("     (__/'.'\\__)\n");
 	}
 }
 
@@ -249,6 +327,7 @@ int main(int argc, char *argv[])
 	}*/
 
 	cleanShardFiles();
+	trolol();
 
 	return 0;
 }

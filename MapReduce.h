@@ -32,6 +32,11 @@ typedef struct hashNode
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
 
+typedef struct arg
+{
+	int index;
+	FILE *file;
+} arg;
 
 /* FUNCTION HEADERS */
 
@@ -40,16 +45,17 @@ int isNumber(char *string);
 int parseArgs(int argc, char *argv[]);
 
 void map(void *(*func_ptr)(void *shard));
-void reduce(void (*func_ptr)(void *key, void *head));
+void partition(void *(*func_ptr)(void *argstruct));
 
 void *mapWord(void *voidshard);
 void *mapInt(void *shard);
 
-void reduceWord(hashNode* wordHash);
+void *reduceWord(void *argstruct);
 void reduceInt(hashNode* intHash);
 
 
 void cleanShardFiles();
+void trolol();
 
 hashNode* newHashNode(char* word, int value);
 valueNode* newValNode(int value);
