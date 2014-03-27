@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 	
 	if(word) 
 	{
-		printf("Found word: %s with value: %i\n", word->key, word->valueHead->value);
+		printf("Found word: %s with value: %i\n", (char*)word->key, word->valueHead->value);
 	}
 	else
 	{

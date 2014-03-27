@@ -25,7 +25,7 @@ typedef struct valueNode
 
 typedef struct hashNode 
 {
-    char* key;                    /* key */
+    void* key;                    /* key */
     valueNode *valueHead;
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
