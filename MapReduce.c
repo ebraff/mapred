@@ -123,7 +123,6 @@ void map(void *(*func_ptr)(void *shard))
 		/* grab the shardfile that this thread is incharge of */
 		shardfiles[threadID] = (char *)malloc(sizeof(char) * (strlen(infile) + 4));
 		sprintf(shardfiles[threadID], "%s.%d", infile, threadID);
-		printf("shardfile = %s\n", shardfiles[threadID]);
 		pthread_create(&threads[threadID], NULL, func_ptr, (void *)shardfiles[threadID]);
 	}
 
@@ -214,7 +213,6 @@ void *reduceWord(void *argstruct)
 void *mapWord(void *voidshard)
 {
 	char *shard = (char *)voidshard;
-	printf("mapWord(%s)\n", shard);
 	FILE *file;
 	if ((file = fopen(shard, "r")) == NULL)
 	{
@@ -262,7 +260,7 @@ void trolol()
 	time_t t;
 	srand((unsigned) time(&t));
 	int funNum = rand();
-	printf("%d\n",funNum);
+
 	if (funNum % 7 == 0)
 	{
 		printf("         ___\n");
