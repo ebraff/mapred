@@ -111,6 +111,7 @@ int parseArgs(int argc, char *argv[])
  */
 void map(void *(*func_ptr)(void *shard))
 {
+	sem_init(&semLock, 0, 1);
 	pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * numMapThreads);
 	char **shardfiles = (char **)malloc(sizeof(char *) * numMapThreads);
 
@@ -123,7 +124,6 @@ void map(void *(*func_ptr)(void *shard))
 		/* grab the shardfile that this thread is incharge of */
 		shardfiles[threadID] = (char *)malloc(sizeof(char) * (strlen(infile) + 4));
 		sprintf(shardfiles[threadID], "%s.%d", infile, threadID);
-		printf("shardfile = %s\n", shardfiles[threadID]);
 		pthread_create(&threads[threadID], NULL, func_ptr, (void *)shardfiles[threadID]);
 	}
 
@@ -135,6 +135,7 @@ void map(void *(*func_ptr)(void *shard))
 	}
 
 	free(threads);
+	sem_destroy(&semLock);
 }
 
 /* Name: reduce
@@ -176,8 +177,10 @@ void partition(void *(*func_ptr)(void *argstruct))
 }
 
 /* Name: reduceWord
- * Description:
- * Arguments: wordHash -
+ * Description: Grabs the set of key, value pairs that it is responsible for counting
+ * 		and counts all occurances of a single key and outputs the results
+ * 		to the outfile provided by the user.
+ * Arguments: argstruct - a struct containing an int index and a file handle fh
  * Returns: void
  */
 void *reduceWord(void *argstruct)
@@ -199,8 +202,10 @@ void *reduceWord(void *argstruct)
 			total++;
 			valueNode *temp = vnode;
 			vnode = vnode->next;
+printf("thread %d freeing node %d for value %s\n", idx, total, hnode->key);
 			free(temp);
 		}
+
 		fprintf(file, "%s %d\n", hnode->key, total);
 	}
 }
@@ -214,7 +219,6 @@ void *reduceWord(void *argstruct)
 void *mapWord(void *voidshard)
 {
 	char *shard = (char *)voidshard;
-	printf("mapWord(%s)\n", shard);
 	FILE *file;
 	if ((file = fopen(shard, "r")) == NULL)
 	{
@@ -230,12 +234,51 @@ void *mapWord(void *voidshard)
 			sprintf(word, "%s%c", word, tolower(chr));
 		else if (strlen(word) != 0) /* if we have a completed word */
 		{
+			sem_wait(&semLock);
 			addWord(word, 1);
+			sem_post(&semLock);
 			sprintf(word, "");
 		}
 	}
 
 	fclose(file);
+}
+
+/* Name: mapcout
+ *  * Description: The user defined function which pulls numbers out
+ *   *                              of a shard file
+ *    * Arguments: shard - the name of the shard file
+ *     * Returns: void
+ *      */
+void *mapcount(void *voidshard)
+{
+        char *shard = (char *)voidshard;
+        FILE *file;
+        if ((file = fopen(shard, "r")) == NULL)
+        {
+                printf("ERROR: Failed to open shard file %s\n", shard);
+                exit(1);
+        }
+
+        char number[1024]; /* word buffer for reading from the file */
+        char chr;
+        while((chr = fgetc(file)) != EOF)
+        {
+                if (isdigit(chr)) /* add to the current word */
+                        sprintf(number, "%s%c", number, tolower(chr));
+                else if (strlen(number) != 0) /* if we have a completed word */
+                {
+                        addWord(number, 1);
+                        sprintf(number, "");
+                }
+        }
+
+        fclose(file);
+}
+
+void *reducecount(void *argstruct)
+{
+
 }
 
 /* Name: cleanShardFiles
@@ -262,7 +305,7 @@ void trolol()
 	time_t t;
 	srand((unsigned) time(&t));
 	int funNum = rand();
-	printf("%d\n",funNum);
+
 	if (funNum % 7 == 0)
 	{
 		printf("         ___\n");
@@ -306,25 +349,15 @@ int main(int argc, char *argv[])
 
 	/* Start the Mapping process */
 	if (aFlag) /* sort */
-		printf("this needs to be replaced with a map call");
-	else /* wordcount */
-		map(&mapWord);
-
-	//keyMap = map(mapWord);
-	
-	//addWord("hi", 1, keyMap);
-	//printf("Added \"hi\"\n");
-	
-	//hashNode* word = findWord("hi" , keyMap);
-	/*
-	if(word) 
 	{
-		printf("Found word: %s with value: %i\n", (char*)word->key, word->valueHead->value);
+		map(&mapcount);
+		//partition(&reducecount);
 	}
-	else
+	else /* wordcount */
 	{
-		printf("No word found\n");
-	}*/
+		map(&mapWord);
+		partition(&reduceWord);
+	}
 
 	cleanShardFiles();
 	trolol();

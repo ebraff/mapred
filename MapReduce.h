@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "uthash.h"
 #include "hash.h"
 
@@ -14,6 +15,7 @@ int iFlag; /*threads = 0, procs = 1*/
 int numMapThreads;
 int numReduceThreads;
 char *infile, *outfile;
+sem_t semLock;
 /* Array of hashtables, one for each reduce thread*/
 struct hashNode ** hashArray;
 
