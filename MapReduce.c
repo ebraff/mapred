@@ -111,6 +111,7 @@ int parseArgs(int argc, char *argv[])
  */
 void map(void *(*func_ptr)(void *shard))
 {
+	sem_init(&semLock, 0, 1);
 	pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * numMapThreads);
 	char **shardfiles = (char **)malloc(sizeof(char *) * numMapThreads);
 
@@ -134,6 +135,7 @@ void map(void *(*func_ptr)(void *shard))
 	}
 
 	free(threads);
+	sem_destroy(&semLock);
 }
 
 /* Name: reduce
@@ -200,6 +202,7 @@ void *reduceWord(void *argstruct)
 			total++;
 			valueNode *temp = vnode;
 			vnode = vnode->next;
+printf("thread %d freeing node %d for value %s\n", idx, total, hnode->key);
 			free(temp);
 		}
 
@@ -231,7 +234,9 @@ void *mapWord(void *voidshard)
 			sprintf(word, "%s%c", word, tolower(chr));
 		else if (strlen(word) != 0) /* if we have a completed word */
 		{
+			sem_wait(&semLock);
 			addWord(word, 1);
+			sem_post(&semLock);
 			sprintf(word, "");
 		}
 	}
@@ -269,6 +274,11 @@ void *mapcount(void *voidshard)
         }
 
         fclose(file);
+}
+
+void *reducecount(void *argstruct)
+{
+
 }
 
 /* Name: cleanShardFiles
