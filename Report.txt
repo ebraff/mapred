@@ -1,0 +1,17 @@
+Alexander DeOliveira, Elana Braff
+
+Usage:
+
+1. cd into the directory that contains the code
+2. run make
+3. execute the program using the following format
+	mapred -a [wordcount, sort] -i [procs, threads] -m num_maps -r num_reduces infile outfile
+
+Note: We only had 2 group members so if procs is passed for the -i flag it will
+	put out a message and exit.
+
+Architectural Design:
+
+Tests: 
+
+Difficulties: Our biggest difficulty was just time and the fact that neither of us like C. We were both pretty busy for most of spring break and didnt get much time to work on this project.

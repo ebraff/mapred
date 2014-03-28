@@ -175,8 +175,10 @@ void partition(void *(*func_ptr)(void *argstruct))
 }
 
 /* Name: reduceWord
- * Description:
- * Arguments: wordHash -
+ * Description: Grabs the set of key, value pairs that it is responsible for counting
+ * 		and counts all occurances of a single key and outputs the results
+ * 		to the outfile provided by the user.
+ * Arguments: argstruct - a struct containing an int index and a file handle fh
  * Returns: void
  */
 void *reduceWord(void *argstruct)
@@ -235,6 +237,38 @@ void *mapWord(void *voidshard)
 	}
 
 	fclose(file);
+}
+
+/* Name: mapcout
+ *  * Description: The user defined function which pulls numbers out
+ *   *                              of a shard file
+ *    * Arguments: shard - the name of the shard file
+ *     * Returns: void
+ *      */
+void *mapcount(void *voidshard)
+{
+        char *shard = (char *)voidshard;
+        FILE *file;
+        if ((file = fopen(shard, "r")) == NULL)
+        {
+                printf("ERROR: Failed to open shard file %s\n", shard);
+                exit(1);
+        }
+
+        char number[1024]; /* word buffer for reading from the file */
+        char chr;
+        while((chr = fgetc(file)) != EOF)
+        {
+                if (isdigit(chr)) /* add to the current word */
+                        sprintf(number, "%s%c", number, tolower(chr));
+                else if (strlen(number) != 0) /* if we have a completed word */
+                {
+                        addWord(number, 1);
+                        sprintf(number, "");
+                }
+        }
+
+        fclose(file);
 }
 
 /* Name: cleanShardFiles
@@ -305,28 +339,15 @@ int main(int argc, char *argv[])
 
 	/* Start the Mapping process */
 	if (aFlag) /* sort */
-		printf("this needs to be replaced with a map call");
+	{
+		map(&mapcount);
+		//partition(&reducecount);
+	}
 	else /* wordcount */
 	{
 		map(&mapWord);
 		partition(&reduceWord);
 	}
-
-	//keyMap = map(mapWord);
-	
-	//addWord("hi", 1, keyMap);
-	//printf("Added \"hi\"\n");
-	
-	//hashNode* word = findWord("hi" , keyMap);
-	/*
-	if(word) 
-	{
-		printf("Found word: %s with value: %i\n", (char*)word->key, word->valueHead->value);
-	}
-	else
-	{
-		printf("No word found\n");
-	}*/
 
 	cleanShardFiles();
 	trolol();
