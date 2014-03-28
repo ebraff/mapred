@@ -31,6 +31,7 @@ typedef struct hashNode
 {
     char* key;                    /* key */
     valueNode *valueHead;
+    struct hashNode *next;
     UT_hash_handle hh;         /* makes this structure hashable */
 } hashNode;
 
@@ -44,16 +45,19 @@ typedef struct arg
 
 void printUsage();
 int isNumber(char *string);
+int hasNext(int len);
 int parseArgs(int argc, char *argv[]);
 
 void map(void *(*func_ptr)(void *shard));
 void partition(void *(*func_ptr)(void *argstruct));
 
 void *mapWord(void *voidshard);
-void *mapInt(void *shard);
+void *mapCount(void *shard);
 
 void *reduceWord(void *argstruct);
-void reduceInt(hashNode* intHash);
+void *reduceCount(void* argstruct);
+void sortHashAll();
+void* sortHash(void* hashNodeVoid);
 
 
 void cleanShardFiles();
@@ -68,6 +72,24 @@ unsigned long hash(unsigned char *str);
 
 
 /* HASH FUNCTIONS */
+
+/* Sort one hash table */
+void* sortHash(void* hashNodeVoid){
+    hashNode** hn = (hashNode**)hashNodeVoid;
+    HASH_SORT(*hn, keyCompare);
+    
+}
+
+int keyCompare(void *a, void *b) {
+    int res = atoi((char*)a) - atoi((char*)b);
+    
+    if(res < 0)
+        return -1; /* a < b */
+    else if(res == 0)
+        return 0; /* a == b */
+    else
+        return 1; /* a > b */
+}
 
 /* Create new hashNode */
 hashNode* newHashNode(char* word, int value)
@@ -118,10 +140,9 @@ unsigned long hash(unsigned char *str)
 {
     unsigned long hash = 5381;
     int c;
-
+    
     while (c = *str++)
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
+    
     return hash;
 }
-
